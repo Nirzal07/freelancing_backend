@@ -8,7 +8,7 @@ SECRET_KEY = config('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["kaamxa.herokuapp.com", "64.227.173.123"]
+ALLOWED_HOSTS = ["freelancing123.herokuapp.com"]
 
 DATABASES = {
    'default': {
