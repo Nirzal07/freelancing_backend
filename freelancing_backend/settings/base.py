@@ -16,12 +16,9 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 
-SECRET_KEY = 'django-insecure-cw+p5t*dku)1h!ou)qs_px32(pxa^5c9@lz3c#4%^1x#_jn=ip'
-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
 
 AUTH_USER_MODEL = 'users.User'
 # Application definition
@@ -96,12 +93,6 @@ WSGI_APPLICATION = 'freelancing_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
 
 
 # Password validation
