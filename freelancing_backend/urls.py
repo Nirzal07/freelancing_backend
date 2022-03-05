@@ -1,5 +1,7 @@
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 from rest_framework.views import APIView
 from job import views as jobs_views
 from rest_framework.response import Response
@@ -14,7 +16,7 @@ urlpatterns = [
     path('categories_list', jobs_views.CategoryView.as_view(), name= 'categories'),
     path('skills_list', jobs_views.SkillsView.as_view(), name= 'skills'),
     
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 class ApiOverview(APIView):
     
