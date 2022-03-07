@@ -57,6 +57,7 @@ INSTALLED_APPS = DJANGO_DEFAULT_APPS + CUSTOM_APPS + THIRD_PARTY_LIBRARIES
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',

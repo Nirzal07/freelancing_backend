@@ -11,6 +11,12 @@ import os
 
 from django.core.wsgi import get_wsgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freelancing_backend.settings')
+
+dev = os.path.isfile("./settings/dev.py")
+if dev:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freelancing_backend.settings.dev')
+
+else:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freelancing_backend.settings.prod')
 
 application = get_wsgi_application()

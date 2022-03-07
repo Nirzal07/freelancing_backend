@@ -11,6 +11,11 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freelancing_backend.settings')
+dev = os.path.isfile("./settings/dev.py")
+if dev:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freelancing_backend.settings.dev')
+
+else:
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freelancing_backend.settings.prod')
 
 application = get_asgi_application()
