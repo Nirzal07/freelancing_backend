@@ -12,7 +12,7 @@ from .views import (
     )
 
 
-app_name = 'accounts'
+app_name = 'users'
 freelancer_account_router = DefaultRouter()
 freelancer_account_router.register(
     'freelancer',

@@ -6,7 +6,7 @@ from decouple import config
 from rest_framework import serializers
 from .models import User, ClientAccount, FreelancerAccount
 
-from job.models import Category,  Address
+from job.models import Category,  Address, Skills
 from rest_framework.fields import CurrentUserDefault
 # from . import google
 # from .social_auth import social_user_signup, social_user_signin
@@ -72,11 +72,26 @@ class FreelancerAccountSerializer(serializers.ModelSerializer):
         allow_null = True,
         queryset= Address.objects.all()
         )
+    
+    skills = serializers.SlugRelatedField(
+        many=True,
+        read_only=False, 
+        slug_field='title',
+        allow_null = True,
+        queryset= Skills.objects.all()
+        )
+    field = serializers.SlugRelatedField(
+        read_only=False, 
+        slug_field='title',
+        allow_null = True,
+        queryset= Category.objects.all()
+        )
+        
     has_complete_profile = serializers.ReadOnlyField()
     class Meta:
         model = FreelancerAccount
         fields = '__all__'
-        read_only_fields = ["has_complete_profile", "registered_on"]
+        read_only_fields = ["has_complete_profile", "registered_on","profile_picture"]
 
 
 
