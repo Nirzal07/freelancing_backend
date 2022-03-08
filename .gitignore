@@ -6,7 +6,7 @@ __pycache__/
 dev.py
 media
 normal
-migrations
+# migrations
 kaamxa_env
 Remaining.txt
 
