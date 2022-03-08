@@ -7,7 +7,6 @@ dev.py
 media
 normal
 # migrations
-kaamxa_env
 Remaining.txt
 
 db.sqlite3

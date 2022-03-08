@@ -106,9 +106,9 @@ class ClientAccount(models.Model):
     profile_picture         = models.ImageField(upload_to=client_image_upload, height_field=None, width_field=None, blank=True, null=True)  
 
     age                     = models.PositiveIntegerField(blank = True, default=0)
-    gender                  = models.CharField(choices=Gender, max_length=50, blank=True, default=Gender[0][0])
+    gende                  = models.CharField(choices=Gender, max_length=50, blank=True, default=Gender[0][0])
     address                 = models.ForeignKey('job.Address', on_delete=models.RESTRICT, null=True, blank=True)
-    contact                 = models.CharField( max_length=14, blank=True)
+    contact                 = models.IntegerField(blank=True)
     profession              = models.CharField(max_length=500, blank=True)
     company_category        = models.CharField(max_length=500, blank=True)
     registered_on           = models.DateTimeField(
