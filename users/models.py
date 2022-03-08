@@ -5,7 +5,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.utils.text import slugify
 from django.utils import timezone
 
-from .managers import CustomUserManager
+from .managers import CustomUserManager, FreelancerManager
 from django.contrib import messages
 from django.db.models.signals import post_save
 from django.dispatch import receiver
@@ -107,8 +107,8 @@ class ClientAccount(models.Model):
 
     age                     = models.PositiveIntegerField(blank = True, default=0)
     gender                  = models.CharField(choices=Gender, max_length=50, blank=True, default=Gender[0][0])
-    address                = models.ForeignKey('job.Address', on_delete=models.RESTRICT, null=True, blank=True)
-    contact                  = models.CharField( max_length=14, blank=True)
+    address                 = models.ForeignKey('job.Address', on_delete=models.RESTRICT, null=True, blank=True)
+    contact                 = models.CharField( max_length=14, blank=True)
     profession              = models.CharField(max_length=500, blank=True)
     company_category        = models.CharField(max_length=500, blank=True)
     registered_on           = models.DateTimeField(
@@ -131,12 +131,14 @@ def freelancer_image_upload(instance, filename):
 class FreelancerAccount(models.Model):
     """
     """
+    objects = FreelancerManager()
+    
     basic_user              = models.OneToOneField('users.User', limit_choices_to={'is_freelancer': True} , on_delete= models.CASCADE)
     full_name               = models.CharField(max_length=50)
     age                     = models.PositiveIntegerField(blank = True, default=0)
     gender                  = models.CharField(choices=Gender, max_length=50, blank=True,  default=Gender[0][0])
     profile_picture         = models.ImageField(upload_to=freelancer_image_upload, height_field=None, width_field=None, blank=True, null=True)  
-    field                   = models.ForeignKey('job.Category', on_delete=models.SET_NULL, blank=True, null=True)
+    category                   = models.ForeignKey('job.Category', on_delete=models.SET_NULL, blank=True, null=True)
     contact                 = models.CharField(max_length=10, blank=True)
     address                 = models.ForeignKey('job.Address', on_delete=models.SET_NULL, blank=True, null=True)
     website                 = models.CharField(max_length=300, blank=True, null=True)  

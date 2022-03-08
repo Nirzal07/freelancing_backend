@@ -4,12 +4,15 @@ from random import choice
 from rest_framework import views
  
 shuffling_list = [
-    'title', 'category__title','area', 'salary', 'views',
-    '-title', '-category__title','-area', '-salary', '-views'
+    'title', 'category__title', 'price', 'views',
+    '-title', '-category__title', '-price', '-views'
               ]
 shuffle_by = choice(shuffling_list)
 class JobModelManager(models.Manager):
     def standard(self):
+        return super().get_queryset().order_by(shuffle_by)
+    
+    def featured(self):
         return super().get_queryset().order_by(shuffle_by)
     
     def premium(self):

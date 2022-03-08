@@ -12,11 +12,11 @@ class AbstractModelAdmin(admin.ModelAdmin):
 
 class AbstractJobAdmin(admin.ModelAdmin):
     # add account.companyname whereever necessary
-    list_display = ['id', 'title', 'announced_on']
+    list_display = ['id', 'title',]
     list_display_links = ['id', 'title']
-    ordering = ('-announced_on',)
+    ordering = ()
     search_fields = ('title',)
-    readonly_fields =('announced_on',)
+    readonly_fields =()
 
 @admin.register(Job)
 class JobAdmin(AbstractJobAdmin):

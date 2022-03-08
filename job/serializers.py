@@ -26,10 +26,8 @@ class JobSerializer(serializers.ModelSerializer):
         slug_field='title',
         queryset= Skills.objects.all()
         )
-        
-    min_price = serializers.ReadOnlyField()
-    max_price = serializers.ReadOnlyField()
-    price_amount = serializers.ReadOnlyField()
+    
+    announced_on = serializers.ReadOnlyField()
     # address = serializers.SlugRelatedField(
     #     read_only=False, 
     #     slug_field='title',
@@ -39,7 +37,7 @@ class JobSerializer(serializers.ModelSerializer):
         model = Job
         exclude = [ ]
         read_only_fields = ['slug', 'announced_on']
-        extra_kwargs = {'price': {'write_only': True}}
+        extra_kwargs = {'price': {'write_only': True}, 'url': {'lookup_field': 'slug'}}
 
 class FavouritesSerializer(serializers.ModelSerializer):
     pass

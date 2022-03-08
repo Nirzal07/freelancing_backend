@@ -34,6 +34,9 @@ from .models import (
     ProposedJobs
     )
 
+import users.models as user_models 
+import users.serializers as user_serializers 
+
 from django.db.models import Q
 from django.utils import  timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -43,6 +46,60 @@ from django.dispatch import receiver
 from django.core.signals import request_finished
 
 
+
+def get_popular_categories():
+    popular_categories= []
+    for popular_category in Category.objects.all().order_by():
+        popular_categories.append({"category_id": popular_category.id, "category_title": popular_category.title, "number_of_openings": popular_category.no_of_openings})
+    return popular_categories
+
+def get_jobs_from_random_categories(no_of_items):
+    """"""
+    ids = Category.objects.all().values_list('id')
+    id_list = [value[0] for value in ids]
+    
+    random_cat_jobs = []
+    for id in id_list:
+        category = Category.objects.get(id = id)
+        category_jobs = Job.jobs.filter(category=category)[:no_of_items]
+        category_jobs_serializer= JobSerializer(category_jobs, many=True)
+        job = {'category_title':category.title , 'jobs' : category_jobs_serializer.data}
+        random_cat_jobs.append(job)
+    return random_cat_jobs
+        
+class HomePage(APIView):
+    def get(self, request, format=None):
+        # featured and popular jobs
+        job_display_no= 4
+        standard_jobs = Job.objects.standard()[:job_display_no]
+        standard_serializer = JobSerializer(standard_jobs, many=True)
+        
+        featured_freelancers = FreelancerAccount.objects.standard()[:job_display_no]
+        featured_freelancers_serializer = user_serializers.FreelancerAccountSerializer(featured_freelancers, many=True)
+        
+        featured_jobs = Job.objects.standard()[:job_display_no]
+        featured_serializer = JobSerializer(featured_jobs, many=True)
+        
+        premium_jobs = Job.objects.premium()[:job_display_no]
+        premium_serializer = JobSerializer(premium_jobs, many=True)
+        
+        popular_jobs = Job.objects.popular()[:job_display_no]
+        popular_serializer = JobSerializer(popular_jobs, many=True)
+        
+        popular_categories = Category.objects.popular()
+        popular_category_serializer = CategorySerializer(popular_categories, many= True)
+
+
+        datas = {
+            'featured_jobs': featured_serializer.data,
+            'featured_freelancers': featured_freelancers_serializer.data,
+            'popular_categories': popular_category_serializer.data,
+            # 'standard_jobs': standard_serializer.data,
+            # 'premium_jobs': premium_serializer.data,
+            # 'popular_jobs': popular_serializer.data,
+            # 'random_categories' : get_jobs_from_random_categories(no_of_items=job_toshow)
+            }
+        return Response(datas, status=status.HTTP_200_OK)
 
 class JobFilter(filters.FilterSet):
     try:
@@ -60,28 +117,29 @@ class JobFilter(filters.FilterSet):
     )
     
     address = MultipleChoiceFilter(
-        field_name='address__title',
+        field_name='client__address__title',
         lookup_expr='exact',
         conjoined=True,  # uses AND instead of OR
         choices = address_choices
     )
     
-    min_salary = filters.NumberFilter(field_name="salary", lookup_expr='gte')
-    max_salary = filters.NumberFilter(field_name="salary", lookup_expr='lte')
+    min_price = filters.NumberFilter(field_name="price", lookup_expr='gte')
+    max_price = filters.NumberFilter(field_name="price", lookup_expr='lte')
     # education = filters.CharFilter(field_name="education", lookup_expr='icontains')
-    experience = filters.CharFilter(field_name="experience", lookup_expr='icontains')
+    # experience = filters.CharFilter(field_name="experience", lookup_expr='icontains')
 
     class Meta:
         model = Job
-        fields = ['category', 'min_salary', 'max_salary','experience']
+        fields = ['category', 'min_price', 'max_price', 'address']
 
 class JobView(ModelViewSet):
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     search_fields = ['title', 'description']
     filterset_class = JobFilter
-    ordering_fields = ['announced_on', 'budget', 'views']
+    ordering_fields = ['announced_date', 'min_price', 'max_price', 'views']
     queryset = Job.objects.all()
     serializer_class = JobSerializer
+    lookup_field = 'slug'
     # permission_classes = (IsCreater,)
 
     
@@ -258,51 +316,6 @@ class SkillsView(APIView):
         serializer= SkillsSerializer(skills, many= True)
         return Response(serializer.data, status= status.HTTP_200_OK)
     
-# def get_popular_categories():
-#     popular_categories= []
-#     for popular_category in Category.objects.all().order_by():
-#         popular_categories.append({"category_id": popular_category.id, "category_title": popular_category.title, "number_of_openings": popular_category.no_of_openings})
-#     return popular_categories
-
-# def get_jobs_from_random_categories(no_of_items):
-#     """"""
-#     ids = Category.objects.all().values_list('id')
-#     id_list = [value[0] for value in ids]
-    
-#     random_cat_jobs = []
-#     for id in id_list:
-#         category = Category.objects.get(id = id)
-#         category_jobs = Job.jobs.filter(category=category)[:no_of_items]
-#         category_jobs_serializer= JobSerializer(category_jobs, many=True)
-#         job = {'category_title':category.title , 'jobs' : category_jobs_serializer.data}
-#         random_cat_jobs.append(job)
-#     return random_cat_jobs
-        
-# class HomePage(APIView):
-#     def get(self, request, format=None):
-#         # featured and popular jobs
-#         job_toshow= 4
-#         standard_jobs = Job.jobs.standard()[:job_toshow]
-#         standard_serializer = JobSerializer(standard_jobs, many=True)
-        
-#         premium_jobs = Job.jobs.premium()[:job_toshow]
-#         premium_serializer = JobSerializer(premium_jobs, many=True)
-        
-#         popular_jobs = Job.jobs.popular()[:job_toshow]
-#         popular_serializer = JobSerializer(popular_jobs, many=True)
-        
-#         popular_categories = Category.objects.popular()
-#         popular_category_serializer = CategorySerializer(popular_categories, many= True)
-
-
-#         datas = {
-#             'popular_categories': popular_category_serializer.data,
-#             'standard_jobs': standard_serializer.data,
-#             'premium_jobs': premium_serializer.data,
-#             'popular_jobs': popular_serializer.data,
-#             'random_categories' : get_jobs_from_random_categories(no_of_items=job_toshow)
-#             }
-#         return Response(datas, status=status.HTTP_200_OK)
 
 
 # def get_similar_jobs(job):

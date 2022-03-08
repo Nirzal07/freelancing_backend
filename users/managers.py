@@ -1,5 +1,6 @@
 from django.contrib.auth.models import BaseUserManager
 from django.utils.translation import ugettext_lazy as _
+from django.db import models
 
 class CustomUserManager(BaseUserManager):
     """custom user model with email as the unique identifier"""
@@ -28,3 +29,8 @@ class CustomUserManager(BaseUserManager):
         if extra_fields.get('is_superuser') is not True:
             raise ValueError(_('Superuser must have is_superuser=True.'))
         return self.create_user(email, password, **extra_fields)
+    
+class FreelancerManager(models.Manager):
+    def featured(self):
+        # return super().get_queryset().filter(#featured jobs)
+        return super().get_queryset().order_by('')

@@ -33,9 +33,11 @@ from .serializers import (
     )
 import job.models as job_models
 from .models import User, ClientAccount, FreelancerAccount, VerificationCode
-
-
-
+from django_filters import rest_framework as filters
+from django_filters import MultipleChoiceFilter
+from django.db.utils import OperationalError, ProgrammingError
+from rest_framework.filters import SearchFilter, OrderingFilter
+from django_filters.rest_framework import DjangoFilterBackend
 class UserSignUpView(CreateAPIView):
     serializer_class = UserAccountSerializer
     permission_classes = (AllowAny,)
@@ -151,10 +153,44 @@ class ClientAccountViewset(ModelViewSet):
     serializer_class = ClientAccountSerializer
     # permission_classes = (IsCreater,)
     
+class FreelancerFilter(filters.FilterSet):
+    try:
+        cat_choices = [(cat, cat) for cat in job_models.Category.objects.all().values_list('title', flat=True)]
+        address_choices = [(dis, dis) for dis in job_models.Address.objects.all().values_list('title', flat=True)]
+    except (OperationalError, ProgrammingError) as e:
+        cat_choices=[]
+        address_choices=[]
+        
+    field = MultipleChoiceFilter(
+        field_name='category__title',
+        lookup_expr='exact',
+        conjoined=True,  # uses AND instead of OR
+        choices = cat_choices
+    )
+    
+    address = MultipleChoiceFilter(
+        field_name='address__title',
+        lookup_expr='exact',
+        conjoined=True,  # uses AND instead of OR
+        choices = address_choices
+    )
+    
+    # education = filters.CharFilter(field_name="education", lookup_expr='icontains')
+    # experience = filters.CharFilter(field_name="experience", lookup_expr='icontains')
+
+    class Meta:
+        model = FreelancerAccount
+        fields = ['category', 'address']
+
+
 class FreelancerAccountViewset(ModelViewSet):
-    permission_classes = (IsAuthenticated,)
+    # permission_classes = (IsAuthenticated,)
     queryset = FreelancerAccount.objects.all()
     serializer_class = FreelancerAccountSerializer
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    search_fields = ['full_name', 'category__title']
+    filterset_class = FreelancerFilter
+    ordering_fields = ['profile_views']
 
 class FreelancerDashboardView(APIView):
     """

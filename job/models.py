@@ -7,7 +7,7 @@ from django.dispatch import receiver
 from django.db.models.signals import post_save, m2m_changed
 from .managers import JobModelManager, CategoryManager
 from .choices import ExperienceChoices, ListingType
-
+import datetime
 
 class AbstractModel(models.Model):
     title = models.CharField(unique= True, max_length=50)
@@ -47,7 +47,9 @@ class Job(models.Model):
     category                = models.ForeignKey(Category, related_name='category', on_delete=models.SET_NULL, null=True,  default=1)
     # listing_type            = models.CharField(max_length=20, choices=ListingType, default=ListingType[0][0])
     price_is_range          = models.BooleanField(default=True)
-    price                  = models.CharField(max_length=20)
+    price                  = models.PositiveIntegerField(blank=True)
+    min_price                  = models.PositiveIntegerField()
+    max_price                  = models.PositiveIntegerField()
     # no_of_vacancies         = models.IntegerField(default=1)
     description             = models.TextField(blank= True)
     # experience              = models.CharField(max_length= 20, choices=ExperienceChoices)
@@ -56,43 +58,50 @@ class Job(models.Model):
     views                   = models.PositiveIntegerField(default= 0)
     slug                    = models.SlugField(blank=True)
 
-    announced_on            = models.DateTimeField(auto_now_add=True)
+    announced_date            = models.DateTimeField(auto_now_add=True)
     class Meta:
         verbose_name = "Job"
         verbose_name_plural = "Jobs"
 
     def __str__(self):
         return self.title
-    @property
-    def price_amount(self):
-        if not self.price_is_range:
-            return int(self.price)
-        return 0
-    
-    @property
-    def min_price(self):
-        if self.price_is_range and self.price.contains('-'):
-            return int(self.price.split('-')[0])
-        return 0
-    
-    @property
-    def max_price(self):
-        if self.price_is_range and self.price.contains('-'):
-            return int(self.price.split('-')[1])
-        return 0
     
     @property
     def is_available(self):
         # if deadline is exceeded return false else return true
         pass
 
+    @property
+    def announced_on(self):
+        now = datetime.datetime.now().astimezone()
+        s = str(now-self.announced_date).split(",")
+        return f'{s[0]} ago' if len(s) >= 2 else "Today"
+
     def save(self, *args, **kwargs): # new
-        if not self.slug:
-            self.slug = slugify(self.title)
+        self.slug = slugify( f"{self.id}-{self.title}" )
         self.title = self.title.title()
-        
+        if self.price_is_range:
+            self.price = (self.min_price + self.max_price) / 2
         return super().save(*args, **kwargs)
 
+    # @property
+    # def price_amount(self):
+    #     if not self.price_is_range:
+    #         return int(self.price)
+    #     return 0
+    
+    # @property
+    # def min_price(self):
+    #     if self.price_is_range and self.price.contains('-'):
+    #         return int(self.price.split('-')[0])
+    #     return int(self.price)
+    
+    # @property
+    # def max_price(self):
+    #     if self.price_is_range and self.price.contains('-'):
+    #         return int(self.price.split('-')[1])
+    #     return int(self.price)
+    
 # @receiver(post_save, sender=Job)
 # def update_categories_noofopening(sender, instance, created = False, **kwargs):
 #     category = instance.category

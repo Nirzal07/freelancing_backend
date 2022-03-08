@@ -80,7 +80,7 @@ class FreelancerAccountSerializer(serializers.ModelSerializer):
         allow_null = True,
         queryset= Skills.objects.all()
         )
-    field = serializers.SlugRelatedField(
+    category = serializers.SlugRelatedField(
         read_only=False, 
         slug_field='title',
         allow_null = True,
