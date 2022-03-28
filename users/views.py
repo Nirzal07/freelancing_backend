@@ -1,5 +1,6 @@
 #django
 from django.contrib.auth import login, logout, authenticate
+
 from django.core.mail import message
 from django.urls import reverse
 import datetime
@@ -79,7 +80,6 @@ class UserSignUpView(CreateAPIView):
         else:
             return Response(serializer.errors, status= status.HTTP_200_OK)
      
-
 class SignInView(APIView):
     permission_classes = (AllowAny,)
 
@@ -111,8 +111,7 @@ class SignInView(APIView):
         elif user and not user.is_verified:
             return Response({"message": "User not verified"}, status= status.HTTP_200_OK)
         return Response({"message": "Invalid Login Credentials"}, status= status.HTTP_200_OK)
-    
-        
+
 class BasicUserView(APIView):
     """
     update this view to change user's account type if has_complete_profile is false
@@ -152,7 +151,6 @@ class ClientAccountViewset(ModelViewSet):
     queryset = ClientAccount.objects.all()
     serializer_class = ClientAccountSerializer
     # permission_classes = (IsCreater,)
-    
 class FreelancerFilter(filters.FilterSet):
     try:
         cat_choices = [(cat, cat) for cat in job_models.Category.objects.all().values_list('title', flat=True)]
@@ -181,7 +179,6 @@ class FreelancerFilter(filters.FilterSet):
     class Meta:
         model = FreelancerAccount
         fields = ['category', 'address']
-
 
 class FreelancerAccountViewset(ModelViewSet):
     # permission_classes = (IsAuthenticated,)
@@ -333,9 +330,8 @@ class AccountVerificationView(APIView):
                 Response({'error': 'Invalid Parameters were provided'})
         else:
             return Response({"message":"This account was already verified"}, status=status.HTTP_400_BAD_REQUEST)
-        
-        
-        # social auth
+
+# social auth
 class GoogleAuthSignUpView(GenericAPIView):
 
     serializer_class = GoogleAuthSignUpSerializer
