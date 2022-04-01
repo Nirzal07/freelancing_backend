@@ -97,8 +97,8 @@ class VerificationCode(models.Model):
     
     
 def client_image_upload(instance, filename):
-    return '/'.join(['Client', instance.full_name, ])
-# employee/ job seeker account
+    return '/'.join(['Client', slugify(instance.full_name), filename ])
+
 class ClientAccount(models.Model):
     # on production make on_delete restrict
     basic_user              = models.OneToOneField('users.User', limit_choices_to={'is_freelancer': False}, on_delete=models.CASCADE)    
@@ -108,7 +108,7 @@ class ClientAccount(models.Model):
     age                     = models.PositiveIntegerField(blank = True, default=0)
     gender                  = models.CharField(choices=Gender, max_length=50, blank=True, default=Gender[0][0])
     address                 = models.ForeignKey('job.Address', on_delete=models.RESTRICT, null=True, blank=True)
-    contact                 = models.IntegerField(blank=True)
+    contact                 = models.IntegerField(blank=True, null=True )
     profession              = models.CharField(max_length=500, blank=True)
     company_category        = models.CharField(max_length=500, blank=True)
     registered_on           = models.DateTimeField(
@@ -124,10 +124,8 @@ class ClientAccount(models.Model):
             return True
         return False
         
-
-# employer's account
 def freelancer_image_upload(instance, filename):
-    return '/'.join(['Freelancer', instance.full_name, ])
+    return '/'.join(['Freelancer', slugify(instance.full_name), filename ])
 class FreelancerAccount(models.Model):
     """
     """

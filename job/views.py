@@ -37,6 +37,8 @@ from .models import (
 import users.models as user_models 
 import users.serializers as user_serializers 
 
+from django_filters.fields import CSVWidget
+
 from django.db.models import Q
 from django.utils import  timezone
 from rest_framework.filters import SearchFilter, OrderingFilter
@@ -112,15 +114,17 @@ class JobFilter(filters.FilterSet):
     category = MultipleChoiceFilter(
         field_name='category__title',
         lookup_expr='exact',
-        conjoined=True,  # uses AND instead of OR
-        choices = cat_choices
+        choices = cat_choices,
+        widget=CSVWidget
+
     )
     
     address = MultipleChoiceFilter(
         field_name='client__address__title',
         lookup_expr='exact',
-        conjoined=True,  # uses AND instead of OR
-        choices = address_choices
+        choices = address_choices,
+        widget=CSVWidget
+
     )
     
     min_price = filters.NumberFilter(field_name="price", lookup_expr='gte')
