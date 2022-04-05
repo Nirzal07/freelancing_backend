@@ -126,6 +126,7 @@ class ClientAccount(models.Model):
         
 def freelancer_image_upload(instance, filename):
     return '/'.join(['Freelancer', slugify(instance.full_name), filename ])
+
 class FreelancerAccount(models.Model):
     """
     """
@@ -136,7 +137,7 @@ class FreelancerAccount(models.Model):
     age                     = models.PositiveIntegerField(blank = True, default=0)
     gender                  = models.CharField(choices=Gender, max_length=50, blank=True,  default=Gender[0][0])
     profile_picture         = models.ImageField(upload_to=freelancer_image_upload, height_field=None, width_field=None, blank=True, null=True)  
-    category                   = models.ForeignKey('job.Category', on_delete=models.SET_NULL, blank=True, null=True)
+    category                = models.ForeignKey('job.Category', on_delete=models.SET_NULL, blank=True, null=True)
     contact                 = models.CharField(max_length=10, blank=True)
     address                 = models.ForeignKey('job.Address', on_delete=models.SET_NULL, blank=True, null=True)
     website                 = models.CharField(max_length=300, blank=True, null=True)  

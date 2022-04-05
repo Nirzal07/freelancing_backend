@@ -1,4 +1,5 @@
 #django
+from unicodedata import category
 from django.contrib.auth import login, logout, authenticate
 
 from django.core.mail import message
@@ -159,7 +160,7 @@ class FreelancerFilter(filters.FilterSet):
         cat_choices=[]
         address_choices=[]
         
-    field = MultipleChoiceFilter(
+    category = MultipleChoiceFilter(
         field_name='category__title',
         lookup_expr='exact',
         conjoined=True,  # uses AND instead of OR

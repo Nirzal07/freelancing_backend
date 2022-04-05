@@ -56,7 +56,7 @@ class Job(models.Model):
     skills                  = models.ManyToManyField('job.Skills')
     # deadline                = models.DateField()
     views                   = models.PositiveIntegerField(default= 0)
-    slug                    = models.SlugField(blank=True)
+    slug                    = models.SlugField(unique = True, blank=True)
 
     announced_date            = models.DateTimeField(auto_now_add=True)
     class Meta:
@@ -77,9 +77,7 @@ class Job(models.Model):
         s = str(now-self.announced_date).split(",")
         return f'{s[0]} ago' if len(s) >= 2 else "Today"
 
-    def save(self, *args, **kwargs): # new
-        self.slug = slugify( f"{self.id}-{self.title}" )
-        self.title = self.title.title()
+    def save(self, *args, **kwargs):
         if self.price_is_range:
             self.price = (self.min_price + self.max_price) / 2
         return super().save(*args, **kwargs)
@@ -102,11 +100,19 @@ class Job(models.Model):
     #         return int(self.price.split('-')[1])
     #     return int(self.price)
     
-# @receiver(post_save, sender=Job)
-# def update_categories_noofopening(sender, instance, created = False, **kwargs):
-#     category = instance.category
-#     category.no_of_openings = len(Job.jobs.filter(category=category))
 
+@receiver(post_save, sender=Job)
+def update_categories_noofopening(sender, instance, created = False, **kwargs):
+    if not instance.slug:
+        instance.slug = slugify( f"{instance.id}-{instance.title}" )
+        instance.title = instance.title.title()
+        instance.save()
+
+@receiver(post_save, sender=Job)
+def update_categories_noofopening(sender, instance, created = False, **kwargs):
+    category = instance.category
+    category.no_of_openings = len(Job.jobs.filter(category=category))
+    category.save()
 
 # class Favourites(models.Model):
 #     """
