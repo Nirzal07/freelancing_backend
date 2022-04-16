@@ -7,7 +7,7 @@ from django.utils import timezone
 
 from .managers import CustomUserManager, FreelancerManager
 from django.contrib import messages
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from rest_framework.authtoken.models import Token
 from django.urls import reverse
@@ -35,18 +35,14 @@ AUTH_PROVIDERS = {'facebook': 'facebook', 'google': 'google',
 class User(AbstractBaseUser, PermissionsMixin):
     
     # full_name       = models.CharField(max_length=70)
-    email = models.EmailField(
-        _("Email"),unique=True
-        )
+    email = models.EmailField(_("Email"), unique=True)
     is_freelancer   = models.BooleanField(default=False)
     is_verified     = models.BooleanField(default=True)
     is_active       = models.BooleanField(default=True)
     is_staff        = models.BooleanField(default=False)
     created_at      = models.DateTimeField(auto_now_add=True)
     updated_at      = models.DateTimeField(auto_now=True)
-    # auth_provider   = models.CharField(
-    #     max_length=255, blank=False,null=False, default=AUTH_PROVIDERS.get('custom')
-    #     )
+    auth_provider   = models.CharField( max_length=255,default=AUTH_PROVIDERS.get('custom'))
     
     
     
@@ -78,6 +74,7 @@ def create_secondary_account_instance(sender, instance=None, created=False, **kw
                 # if the basic_user is employer create employer instance with full name, primary_contact or email
                 freelancer_acc = FreelancerAccount(
                     basic_user = instance,
+                    slug = slugify(instance.email),
                     )
                 freelancer_acc.save()
         
@@ -85,6 +82,7 @@ def create_secondary_account_instance(sender, instance=None, created=False, **kw
                 # if the basic_user is jobseeker create JobSeeker instance with full name, mobile or email
                 client_acc = ClientAccount(
                     basic_user = instance,
+                    slug = slugify(instance.email),
                     )
                 client_acc.save()
         
@@ -102,18 +100,16 @@ def client_image_upload(instance, filename):
 class ClientAccount(models.Model):
     # on production make on_delete restrict
     basic_user              = models.OneToOneField('users.User', limit_choices_to={'is_freelancer': False}, on_delete=models.CASCADE)    
-    full_name               = models.CharField(max_length=50)
+    is_company              = models.BooleanField(default=False)
+    full_name               = models.CharField(max_length=50, blank = True)
     profile_picture         = models.ImageField(upload_to=client_image_upload, height_field=None, width_field=None, blank=True, null=True)  
-
-    age                     = models.PositiveIntegerField(blank = True, default=0)
     gender                  = models.CharField(choices=Gender, max_length=50, blank=True, default=Gender[0][0])
     address                 = models.ForeignKey('job.Address', on_delete=models.RESTRICT, null=True, blank=True)
     contact                 = models.IntegerField(blank=True, null=True )
     profession              = models.CharField(max_length=500, blank=True)
     company_category        = models.CharField(max_length=500, blank=True)
-    registered_on           = models.DateTimeField(
-                            auto_now_add=True)
-
+    registered_date         = models.DateTimeField(auto_now_add=True)
+    slug                    = models.SlugField(unique=True)
 
     def __str__(self):
         return self.full_name
@@ -124,12 +120,19 @@ class ClientAccount(models.Model):
             return True
         return False
         
+@receiver(post_save, sender=ClientAccount)
+def update_client_slug(sender, instance, created = False, **kwargs):
+    if not instance.slug:
+        instance.slug = slugify( f"{instance.id}-{instance.full_name}" )
+        instance.save()
+
+
 def freelancer_image_upload(instance, filename):
-    return '/'.join(['Freelancer', slugify(instance.full_name), filename ])
+    return '/'.join(['Client', slugify(instance.full_name), filename ])
 
 class FreelancerAccount(models.Model):
     """
-    """
+    """ 
     objects = FreelancerManager()
     
     basic_user              = models.OneToOneField('users.User', limit_choices_to={'is_freelancer': True} , on_delete= models.CASCADE)
@@ -145,14 +148,26 @@ class FreelancerAccount(models.Model):
     bio                     = models.CharField(max_length=50)
     description             = models.TextField(blank=True, null=True)
     profile_views           = models.PositiveIntegerField(blank = True, default=0)
-    registered_on           = models.DateTimeField(auto_now_add=True, blank=True, null=True)
+    slug                    = models.SlugField(unique=True)
+
+    registered_date         = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.full_name
-    
+
+    def save(self, *args, **kwargs):
+        if self.slug:
+            self.slug = slugify( f"{self.id}-{self.full_name}" )
+        return super().save(*args, **kwargs)
 
     @property
     def has_complete_profle(self):
-        if self.basic_user and self.age and self.gender and self.contact:
+        if self.basic_user and self.full_name and self.age and self.gender and self.contact and self.category and self.profile_picture:
             return True
         return False
+    
+@receiver(post_save, sender=FreelancerAccount)
+def update_freelancer_slug(sender, instance, created = False, **kwargs):
+    if not instance.slug:
+        instance.slug = slugify( f"{instance.id}-{instance.full_name}" )
+        instance.save()

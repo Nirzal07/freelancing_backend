@@ -16,12 +16,13 @@ from drf_extra_fields.fields import Base64ImageField
 
 
 class UserAccountSerializer(serializers.ModelSerializer):
-    # full_name = serializers.CharField(required=True)
+    full_name = serializers.CharField(required=True)
     class Meta:
         model = User
-        fields = ('id', 'is_freelancer', 'email', 'password')
+        fields = ('id', 'is_freelancer', 'email', 'password', "full_name")
         write_only_fields = ('password',)
         read_only_fields = ('id',)
+        extra_kwargs = {'is_freelancer': {'required': True}}
 
     def create(self, validated_data):
         user = User(
@@ -32,9 +33,15 @@ class UserAccountSerializer(serializers.ModelSerializer):
         user.save()
         return user
 
-# class SigninSerializer(serializers.Serializer):
-#     email_or_phone = serializers.CharField()
-#     password = serializers.CharField()
+class SigninSerializer(serializers.Serializer):
+    email_or_phone = serializers.CharField()
+    password = serializers.CharField()
+
+class ReadUserSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = User
+        fields = ('id', 'is_freelancer', 'email')
 
 class ClientAccountSerializer(serializers.ModelSerializer):
     profile_picture=Base64ImageField(required= False)
@@ -46,17 +53,16 @@ class ClientAccountSerializer(serializers.ModelSerializer):
     address = serializers.SlugRelatedField(
         read_only=False, 
         slug_field='title',
-        allow_null = True,
+        allow_null = True, 
         queryset= Address.objects.all()
         )
-    
-    
-    
+    has_complete_profile = serializers.ReadOnlyField()
+
     class Meta:
         model = ClientAccount
         fields = '__all__'
-        read_only_fields = ["has_complete_profile", "registered_on"]
-        
+        read_only_fields = ["registered_date"]
+        extra_kwargs = {'url': {'lookup_field': 'slug'}}
 
 
 
@@ -80,18 +86,24 @@ class FreelancerAccountSerializer(serializers.ModelSerializer):
         allow_null = True,
         queryset= Skills.objects.all()
         )
+
     category = serializers.SlugRelatedField(
         read_only=False, 
         slug_field='title',
         allow_null = True,
         queryset= Category.objects.all()
         )
-        
+
+    profile_picture=Base64ImageField(required= True)
+    
     has_complete_profile = serializers.ReadOnlyField()
+
     class Meta:
         model = FreelancerAccount
         fields = '__all__'
-        read_only_fields = ["has_complete_profile", "registered_on","profile_picture"]
+        read_only_fields = [ "registered_date", "slug"]
+        extra_kwargs = {'price': {'write_only': True}, 'url': {'lookup_field': 'slug'}}
+
 
 
 

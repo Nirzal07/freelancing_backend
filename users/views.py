@@ -1,6 +1,7 @@
 #django
 from unicodedata import category
 from django.contrib.auth import login, logout, authenticate
+from django.utils.text import slugify
 
 from django.core.mail import message
 from django.urls import reverse
@@ -24,7 +25,8 @@ from rest_framework.viewsets import ModelViewSet
 from .serializers import (
     GoogleAuthSignUpSerializer,
     UserAccountSerializer,
-#   SigninSerializer,
+    ReadUserSerializer,
+    SigninSerializer,
     ClientAccountSerializer,
     FreelancerAccountSerializer,
     ChangePasswordSerializer,
@@ -46,36 +48,33 @@ class UserSignUpView(CreateAPIView):
 
     def post(self, request):
         serializer = UserAccountSerializer(data= request.data)
-        if User.objects.filter(
-            email = self.request.data['email']).exists():
-            return Response({'error': 'An account with this email address already exists'}, status= status.HTTP_202_ACCEPTED)
-        if serializer.is_valid():
+        if self.request.data.get('email'):
+            if User.objects.filter(
+                email = self.request.data['email']).exists():
+                return Response({'error': 'An account with this email address already exists'}, status= status.HTTP_400_BAD_REQUEST)
+           
+        if serializer.is_valid(raise_exception=True):
             user = serializer.create(serializer.validated_data)
-            # after adding verification remove the two lines below
             user.is_verified = True
             user.save()
             token = Token.objects.get(user= user)
+            full_name = serializer.validated_data['full_name']
 
-            # update full name of employer/jobseeker account of the created user
-            # full_name = serializer.validated_data['full_name']
+            user_data = ReadUserSerializer(user).data
+
             if user.is_freelancer:
                 user_secondary = FreelancerAccount.objects.get(basic_user = user)
             else:
                 user_secondary = ClientAccount.objects.get(basic_user = user) 
+            
+            user_secondary.full_name = full_name
+            user_secondary.slug = slugify( f"{user.id}-{full_name}" )
+            user_secondary.save()
                 
-            # user_secondary.full_name = full_name
-            # user_secondary.save()
+
             data = {
                 # 'message': f'A verification code is sent to {user.email_or_phone}', 
                 'message': 'User Signed Up Successfully',
-                # "user_id": user.id,
-                # "secondary_user_id": user_secondary.id,
-                # "is_freelancer": user.is_freelancer,
-                # # the below line might not be necessary
-                # "has_complete_profile": user_secondary.has_complete_profile,
-                # "email":user.email,
-                # 'full_name' : user_secondary.full_name,
-                # "token": token.key
                 }
             return Response(data, status= status.HTTP_200_OK)
         else:
@@ -89,22 +88,21 @@ class SignInView(APIView):
         password = self.request.data["password"]
         user = authenticate(email=email, password= password)
         if user and user.is_verified:
+            user_data = ReadUserSerializer(user).data
             if user.is_freelancer:
                 user_secondary = FreelancerAccount.objects.get(basic_user = user)
+                user_secondary_data = FreelancerAccountSerializer(user_secondary).data
             else:
                 user_secondary = ClientAccount.objects.get(basic_user = user) 
+                user_secondary_data = ClientAccountSerializer(user_secondary).data
+
             if Token.objects.filter(user= user).exists():
                 Token.objects.filter(user= user).delete()
             token= Token.objects.create(user= user)
             data = {
                 "message": "User logged in successful", 
-                "user_id": user.id,
-                "secondary_user_id": user_secondary.id,
-                "is_employer": user.is_freelancer,
-                # the below line might not be necessary
-                "has_complete_profile": user_secondary.has_complete_profile,
-                "email":user.email, 
-                'full_name' : user_secondary.full_name,
+                "data": user_data,
+                "slug": user_secondary.slug,
                 "token": token.key
                 }
             
@@ -148,9 +146,10 @@ class SignOutView(APIView):
         return Response({'message': "User Logged Out Successfully"})
 
 class ClientAccountViewset(ModelViewSet):
-    permission_classes = (IsAuthenticated,)
+    # permission_classes = (IsAuthenticated,)
     queryset = ClientAccount.objects.all()
     serializer_class = ClientAccountSerializer
+    lookup_field = 'slug'
     # permission_classes = (IsCreater,)
 class FreelancerFilter(filters.FilterSet):
     try:
@@ -189,6 +188,8 @@ class FreelancerAccountViewset(ModelViewSet):
     search_fields = ['full_name', 'category__title']
     filterset_class = FreelancerFilter
     ordering_fields = ['profile_views']
+    lookup_field = 'slug'
+
 
 class FreelancerDashboardView(APIView):
     """

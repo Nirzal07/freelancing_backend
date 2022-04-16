@@ -28,6 +28,8 @@ class JobSerializer(serializers.ModelSerializer):
         )
     
     announced_on = serializers.ReadOnlyField()
+    category_image = serializers.ReadOnlyField()
+
     # address = serializers.SlugRelatedField(
     #     read_only=False, 
     #     slug_field='title',

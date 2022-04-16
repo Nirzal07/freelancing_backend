@@ -4,7 +4,7 @@ from django.utils.text import slugify
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 from django.dispatch import receiver
-from django.db.models.signals import post_save, m2m_changed
+from django.db.models.signals import post_save, pre_save, m2m_changed
 from .managers import JobModelManager, CategoryManager
 from .choices import ExperienceChoices, ListingType
 import datetime
@@ -23,7 +23,7 @@ class AbstractModel(models.Model):
         return super().save(*args, **kwargs)
 
 def category_image_upload(instance, filename):
-    return '/'.join(['CategoryImages', instance.title ])
+    return '/'.join(['CategoryImages', instance.title, filename ])
 class Category(AbstractModel):
     objects = CategoryManager()
     
@@ -56,7 +56,7 @@ class Job(models.Model):
     skills                  = models.ManyToManyField('job.Skills')
     # deadline                = models.DateField()
     views                   = models.PositiveIntegerField(default= 0)
-    slug                    = models.SlugField(unique = True, blank=True)
+    slug                    = models.SlugField(unique=True)
 
     announced_date            = models.DateTimeField(auto_now_add=True)
     class Meta:
@@ -65,7 +65,11 @@ class Job(models.Model):
 
     def __str__(self):
         return self.title
-    
+    @property
+    def category_image(self):
+        if self.category.image:
+            return self.category.image.url
+        return
     @property
     def is_available(self):
         # if deadline is exceeded return false else return true
@@ -102,7 +106,7 @@ class Job(models.Model):
     
 
 @receiver(post_save, sender=Job)
-def update_categories_noofopening(sender, instance, created = False, **kwargs):
+def update_job_slug(sender, instance, created = False, **kwargs):
     if not instance.slug:
         instance.slug = slugify( f"{instance.id}-{instance.title}" )
         instance.title = instance.title.title()
@@ -111,7 +115,7 @@ def update_categories_noofopening(sender, instance, created = False, **kwargs):
 @receiver(post_save, sender=Job)
 def update_categories_noofopening(sender, instance, created = False, **kwargs):
     category = instance.category
-    category.no_of_openings = len(Job.jobs.filter(category=category))
+    category.no_of_openings = len(Job.objects.filter(category=category))
     category.save()
 
 # class Favourites(models.Model):

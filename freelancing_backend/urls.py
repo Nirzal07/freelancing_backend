@@ -11,7 +11,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('job/', include('job.urls')),
     path('users/', include('users.urls')),
-    # path('homepage', jobs_views.HomePage.as_view(), name= 'homepage'),
+    path('homepage', jobs_views.HomePage.as_view(), name= 'homepage'),
     path('address_list', jobs_views.AddressView.as_view(), name= 'address'),
     path('categories_list', jobs_views.CategoryView.as_view(), name= 'categories'),
     path('skills_list', jobs_views.SkillsView.as_view(), name= 'skills'),

@@ -5,7 +5,6 @@ from .models import User, ClientAccount, FreelancerAccount, VerificationCode
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 admin.site.empty_value_display = '(Empty)'
-# add registered on and other fields as readonly fields in the admin email_or_phone
 
 
 class TokenInline(admin.StackedInline):
@@ -27,13 +26,13 @@ class UserAdmin(BaseUserAdmin):
     list_display_links = ('id', 'email','is_freelancer')
     list_filter = ('email', 'is_freelancer')
     fieldsets = (
-        (None, {'fields': ('is_freelancer', 'is_verified', 'email', 'password')}),
+        (None, {'fields': ('is_freelancer', 'is_verified', 'email', 'password', 'auth_provider')}),
         ('Permissions', {'fields': ('is_staff', 'is_active', 'is_superuser')}),
     )
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
-            'fields': ('is_freelancer', 'is_verified', 'email', 'password1', 'password2', 'is_staff', 'is_active', 'is_superuser')}
+            'fields': ('is_freelancer', 'is_verified', 'email', 'auth_provider', 'password1', 'password2', 'is_staff', 'is_active', 'is_superuser')}
         ),
     )
     search_fields = ('email',)
@@ -59,7 +58,7 @@ class FreelancerAccountAdmin(admin.ModelAdmin):
     ordering = ()
     search_fields = ('email',) 
     # add acounts in readonly fields
-    readonly_fields =('registered_on',)
+    readonly_fields =('registered_date',)
     list_filter = ('gender',)
 
 
@@ -72,7 +71,7 @@ class ClientAccountAdmin(admin.ModelAdmin):
     list_display = ['id', 'full_name']
     list_display_links = ['id', 'full_name']
     ordering = ()
-    readonly_fields =('registered_on',)
+    readonly_fields =('registered_date',)
     search_fields = ('email',) 
 
 

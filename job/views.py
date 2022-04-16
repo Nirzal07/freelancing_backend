@@ -76,7 +76,7 @@ class HomePage(APIView):
         standard_jobs = Job.objects.standard()[:job_display_no]
         standard_serializer = JobSerializer(standard_jobs, many=True)
         
-        featured_freelancers = FreelancerAccount.objects.standard()[:job_display_no]
+        featured_freelancers = FreelancerAccount.objects.all()[:job_display_no]
         featured_freelancers_serializer = user_serializers.FreelancerAccountSerializer(featured_freelancers, many=True)
         
         featured_jobs = Job.objects.standard()[:job_display_no]
@@ -154,7 +154,8 @@ class JobView(ModelViewSet):
     #     object.save()
     #     serializer = JobSerializer(object)
     #     data= serializer.data
-    #     data['similar_jobs'] = get_similar_jobs(object)
+    #     # data['similar_jobs'] = get_similar_jobs(object)
+    #     category_image = object.category.image
     #     return Response(data)
     
 class JobsListView(ListAPIView):
