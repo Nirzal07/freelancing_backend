@@ -21,12 +21,15 @@ class AbstractModel(models.Model):
     def save(self, *args, **kwargs): # new
         self.title = self.title.title()
         return super().save(*args, **kwargs)
+def category_pimage_upload(instance, filename):
+    return '/'.join(['CategoryImages', f"{instance.title}_Primary", filename ])
 
 def category_image_upload(instance, filename):
     return '/'.join(['CategoryImages', instance.title, filename ])
 class Category(AbstractModel):
     objects = CategoryManager()
-    
+    freelancer_title = models.CharField(max_length=50)
+    primary_image = models.ImageField(upload_to= category_pimage_upload, null= True, blank= True)
     image = models.ImageField(upload_to= category_image_upload, null= True, blank= True)
     no_of_openings = models.PositiveIntegerField(default=0)
     class Meta:
