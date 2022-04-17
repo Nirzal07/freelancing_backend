@@ -56,20 +56,22 @@ class Job(models.Model):
     skills                  = models.ManyToManyField('job.Skills')
     # deadline                = models.DateField()
     views                   = models.PositiveIntegerField(default= 0)
-    slug                    = models.SlugField(unique=True)
-
+    slug                    = models.SlugField(max_length=100, unique=True)
     announced_date            = models.DateTimeField(auto_now_add=True)
+
     class Meta:
         verbose_name = "Job"
         verbose_name_plural = "Jobs"
 
     def __str__(self):
         return self.title
+
     @property
     def category_image(self):
         if self.category.image:
             return self.category.image.url
         return
+
     @property
     def is_available(self):
         # if deadline is exceeded return false else return true
@@ -84,6 +86,7 @@ class Job(models.Model):
     def save(self, *args, **kwargs):
         if self.price_is_range:
             self.price = (self.min_price + self.max_price) / 2
+            
         return super().save(*args, **kwargs)
 
     # @property
