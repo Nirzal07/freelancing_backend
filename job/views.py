@@ -6,13 +6,15 @@ from users.models import ClientAccount, FreelancerAccount, User
 from django_filters import rest_framework as filters
 from django_filters import MultipleChoiceFilter
 
-from .serializers import ( ProposalsSerializer, 
+from .serializers import ( ProposalSerializer, 
                           AddressSerializer,
                           CategorySerializer,
                           SkillsSerializer,
                           JobSerializer,
                           FavouritesSerializer,
-                          ProposedJobsSerializer
+                          ProposalSerializer,
+                          ProposedJobsSerializer,
+                          JobRequestSerializer,
                           )
 
 from rest_framework.views import APIView
@@ -30,8 +32,9 @@ from .models import (
     Category,
     # Favourites,
     Skills,
-    Proposals,
-    ProposedJobs
+    Proposal,
+    ProposedJobs,
+    JobRequest
     )
 
 import users.models as user_models 
@@ -158,17 +161,15 @@ class JobView(ModelViewSet):
     #     category_image = object.category.image
     #     return Response(data)
     
-class JobsListView(ListAPIView):
-    """ 
-    abstract class for featured, popular, recent jobs list
-    """
-    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
-    search_fields = ['title', 'description']
-    filterset_class = JobFilter
-    ordering_fields = ['title', 'salary']
-    serializer_class = JobSerializer
-    model = Job
-    
+class ProposalViewset(ModelViewSet):
+    queryset = Proposal.objects.all()
+    serializer_class = ProposalSerializer
+
+class JobRequestViewset(ModelViewSet):
+    queryset = JobRequest.objects.all()
+    serializer_class = JobRequestSerializer
+
+
     
 class ProposedJobsView(APIView):
     """
@@ -287,22 +288,7 @@ class PostedJobsListView(APIView):
                 return Response({'message': "You have not posted any jobs yet"}, status=status.HTTP_200_OK)
         return Response({'message': "JobSeeker Account cannot access this"}, status=status.HTTP_200_OK)
           
-    
-class FeaturedJobsListView(JobsListView):
-    def get_queryset(self):
-        queryset = self.model.jobs.featured()
-        return queryset
-    
-class PopularJobsListView(JobsListView):
-    def get_queryset(self):
-        queryset = self.model.jobs.popular()
-        return queryset
-    
-class RecentJobsListView(JobsListView):
-    def get_queryset(self):
-        queryset = self.model.jobs.recent()
-        return queryset
-                
+          
 class AddressView(APIView):
     def get(self, request, *args, **kwargs):
         addresss = Address.objects.all()

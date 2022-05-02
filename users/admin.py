@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.contrib.admin.decorators import display
 from django.contrib.auth.models import Group
-from .models import User, ClientAccount, FreelancerAccount, VerificationCode
+
+from .models import User, ClientAccount, FreelancerAccount, VerificationCode, Portfolio
 from rest_framework.authtoken.models import Token
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 admin.site.empty_value_display = '(Empty)'
@@ -60,6 +61,14 @@ class FreelancerAccountAdmin(admin.ModelAdmin):
     # add acounts in readonly fields
     readonly_fields =('registered_date',)
     list_filter = ('gender',)
+
+@admin.register(Portfolio)
+class PortfolioAdmin(admin.ModelAdmin):
+    list_display = ['id', 'freelancer', 'title']
+    list_display_links =['id', 'freelancer', 'title']
+    ordering = ("created_date",)
+    search_fields = ('freelancer', 'title',) 
+    readonly_fields =('created_date',"updated_date")
 
 
 # @admin.register(VerificationCode)

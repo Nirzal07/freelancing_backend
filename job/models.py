@@ -6,7 +6,7 @@ from django.conf import settings
 from django.dispatch import receiver
 from django.db.models.signals import post_save, pre_save, m2m_changed
 from .managers import JobModelManager, CategoryManager
-from .choices import ExperienceChoices, ListingType
+from .choices import  ListingType, ProposalStatus, JobStatus
 import datetime
 
 class AbstractModel(models.Model):
@@ -45,10 +45,10 @@ class Job(models.Model):
     objects= JobModelManager()
     
     # Prod Note: change set_null into restrict
-    client                = models.ForeignKey("users.ClientAccount", on_delete=models.SET_NULL, null=True, default=1)
+    client                = models.ForeignKey("users.ClientAccount", on_delete=models.SET_NULL, null=True)
     title                   = models.CharField(max_length=100)
     category                = models.ForeignKey(Category, related_name='category', on_delete=models.SET_NULL, null=True,  default=1)
-    # listing_type            = models.CharField(max_length=20, choices=ListingType, default=ListingType[0][0])
+    listing_type            = models.CharField(max_length=20, choices=ListingType, default=ListingType[0][0])
     price_is_range          = models.BooleanField(default=True)
     price                  = models.PositiveIntegerField(blank=True)
     min_price                  = models.PositiveIntegerField()
@@ -58,6 +58,7 @@ class Job(models.Model):
     # experience              = models.CharField(max_length= 20, choices=ExperienceChoices)
     skills                  = models.ManyToManyField('job.Skills')
     # deadline                = models.DateField()
+    status = models.CharField(max_length=20, choices=JobStatus, default=JobStatus[0][0])
     views                   = models.PositiveIntegerField(default= 0)
     slug                    = models.SlugField(max_length=100, unique=True)
     announced_date            = models.DateTimeField(auto_now_add=True)
@@ -79,6 +80,22 @@ class Job(models.Model):
     def is_available(self):
         # if deadline is exceeded return false else return true
         pass
+
+    @property
+    def display_status(self):
+        return self.get_status_display()
+
+    @property
+    def display_listing_type(self):
+        return self.get_listing_type_display()
+
+    @property
+    def client_name(self):
+        return self.client.full_name
+
+    @property
+    def proposants(self):
+        return [ {"proposant" : proposal.proposant.id, "proposal" : proposal.id} for proposal in self.proposal_set.all()]
 
     @property
     def announced_on(self):
@@ -139,16 +156,36 @@ def update_categories_noofopening(sender, instance, created = False, **kwargs):
 #     def __str__(self):
 #         return f"{self.user.email_or_phone}'s Favourites"
     
-class Proposals(models.Model):
-    job = models.OneToOneField("job.Job", on_delete=models.CASCADE)
-    proposants = models.ManyToManyField("users.FreelancerAccount")
+class Proposal(models.Model):
+    job = models.ForeignKey("job.Job", on_delete=models.CASCADE)
+    proposant = models.ForeignKey("users.FreelancerAccount", on_delete=models.CASCADE)
+    # title = models.CharField(max_length=100)
+    price = models.PositiveIntegerField()
+    proposal = models.TextField()
+    status = models.CharField(max_length=20, choices=ProposalStatus, default=ProposalStatus[0][0])
 
     class Meta:
-        verbose_name = 'Proposals'
+        verbose_name = 'Proposal'
         verbose_name_plural = 'Proposals'
+        unique_together = ('job', 'proposant',)
 
     def __str__(self):
-        return f"{self.job.title}'s Proposals"
+        return f"{self.proposant}'s Proposal for {self.job.title[:10]}..."
+
+class JobRequest(models.Model):
+    job = models.ForeignKey("job.Job", on_delete=models.CASCADE)
+    freelancer = models.ForeignKey("users.FreelancerAccount", on_delete=models.CASCADE)
+    price = models.PositiveIntegerField()
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=ProposalStatus, default=ProposalStatus[0][0])
+
+    class Meta:
+        verbose_name = 'Job Request'
+        verbose_name_plural = 'Job Requests'
+        unique_together = ('job', 'freelancer',)
+
+    def __str__(self):
+        return f"{self.job.client}'s Request to {self.freelancer}"
 
 class ProposedJobs(models.Model):
 

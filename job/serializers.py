@@ -1,7 +1,7 @@
 from django.http import request
 from rest_framework import serializers
 from .models import Address, Category, Skills
-from .models import Job, Proposals, ProposedJobs
+from .models import Job, Proposal, ProposedJobs, JobRequest
 from users import serializers as account_serializer
 from drf_extra_fields.fields import Base64ImageField
 
@@ -13,7 +13,7 @@ class SkillsSerializer(serializers.ModelSerializer):
 
 
 class JobSerializer(serializers.ModelSerializer):
-    client = account_serializer.ClientAccountSerializer(read_only = True)
+    # client = account_serializer.ClientAccountSerializer(read_only = True)
 
     category = serializers.SlugRelatedField(
         read_only=False, 
@@ -26,21 +26,25 @@ class JobSerializer(serializers.ModelSerializer):
         slug_field='title',
         queryset= Skills.objects.all()
         )
-    
     announced_on = serializers.ReadOnlyField()
     category_image = serializers.ReadOnlyField()
+    client_name = serializers.ReadOnlyField()
+    proposants = serializers.ReadOnlyField()
+    display_status = serializers.ReadOnlyField()
+    display_listing_type= serializers.ReadOnlyField()
 
-    # address = serializers.SlugRelatedField(
-    #     read_only=False, 
-    #     slug_field='title',
-    #     queryset= Address.objects.all()
-    #     )
     class Meta:
         model = Job
         exclude = [ ]
         read_only_fields = ['slug', 'announced_on']
         extra_kwargs = {'price': {'write_only': True}, 'url': {'lookup_field': 'slug'}}
 
+    def validate_client(self, client):
+        user = serializers.CurrentUserDefault()
+        if client.basic_user != user:
+            raise serializers.ValidationError("Lol Nice Try!")
+        return client
+    
 class FavouritesSerializer(serializers.ModelSerializer):
     pass
     # favourite_jobs = JobSerializer(many = True, read_only = True)
@@ -54,13 +58,17 @@ class FavouritesSerializer(serializers.ModelSerializer):
     #     fields = ['user', 'favourite_jobs', 'added_on']
     #     read_only_fields = ['added_on']
         
-class ProposalsSerializer(serializers.ModelSerializer):
-    proposants = account_serializer.FreelancerAccountSerializer(many=True)
-    job = JobSerializer()
+class ProposalSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Proposals
+        model = Proposal
         fields = '__all__'
         
+class JobRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobRequest
+        fields = '__all__'
+        
+
 class ProposedJobsSerializer(serializers.ModelSerializer):
     jobs = JobSerializer(many = True, read_only = True)
     class Meta:

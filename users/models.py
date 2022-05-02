@@ -1,3 +1,4 @@
+from os import link
 from django.conf import settings
 from django.db import models
 from django.core.mail import send_mail
@@ -35,7 +36,7 @@ AUTH_PROVIDERS = {'facebook': 'facebook', 'google': 'google',
 class User(AbstractBaseUser, PermissionsMixin):
     
     # full_name       = models.CharField(max_length=70)
-    email = models.EmailField(_("Email"), unique=True)
+    email = models.EmailField(_("Email"), unique=True,  error_messages={'unique':"An account with this email already exists."})
     is_freelancer   = models.BooleanField(default=False)
     is_verified     = models.BooleanField(default=True)
     is_active       = models.BooleanField(default=True)
@@ -115,7 +116,7 @@ class ClientAccount(models.Model):
         return self.full_name
 
     @property
-    def has_complete_profle(self):
+    def has_complete_profile(self):
         if self.basic_user and self.age and self.gender and self.contact:
             return True
         return False
@@ -128,7 +129,7 @@ def update_client_slug(sender, instance, created = False, **kwargs):
 
 
 def freelancer_image_upload(instance, filename):
-    return '/'.join(['Client', slugify(instance.full_name), filename ])
+    return '/'.join(['Freelancer', slugify(instance.full_name), filename ])
 
 class FreelancerAccount(models.Model):
     """
@@ -147,9 +148,9 @@ class FreelancerAccount(models.Model):
     skills                  = models.ManyToManyField('job.Skills')
     bio                     = models.CharField(max_length=50)
     description             = models.TextField(blank=True, null=True)
+    portfolios              = models.ManyToManyField('Portfolio', blank=True)   
     profile_views           = models.PositiveIntegerField(blank = True, default=0)
     slug                    = models.SlugField(unique=True)
-
     registered_date         = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -161,13 +162,37 @@ class FreelancerAccount(models.Model):
         return super().save(*args, **kwargs)
 
     @property
-    def has_complete_profle(self):
+    def has_complete_profile(self):
         if self.basic_user and self.full_name and self.age and self.gender and self.contact and self.category and self.profile_picture:
             return True
         return False
     
-@receiver(post_save, sender=FreelancerAccount)
-def update_freelancer_slug(sender, instance, created = False, **kwargs):
-    if not instance.slug:
-        instance.slug = slugify( f"{instance.id}-{instance.full_name}" )
-        instance.save()
+
+def portfolio_image_upload(instance, filename):
+    return '/'.join(['Portolio', slugify(instance.freelancer), filename ])
+
+class Portfolio(models.Model):
+    freelancer          = models.ForeignKey('FreelancerAccount', on_delete=models.CASCADE, related_name='freelaner_account')
+    title              = models.CharField(max_length=50)
+    description        = models.TextField(blank=True, null=True)
+    image              = models.ImageField(upload_to=portfolio_image_upload, height_field=None, width_field=None, blank=True, null=True)
+    link                = models.URLField(blank=True, null=True)
+    created_date       = models.DateTimeField(auto_now_add=True)
+    updated_date       = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.freelancer} - {self.title}" 
+
+@receiver(post_save, sender=Portfolio)
+def update_freelancer_portfolio(sender, instance, created = False, **kwargs):
+    if created:
+        freelancer = instance.freelancer
+        freelancer.portfolios.add(instance)
+        freelancer.save()
+
+# @receiver(post_delete, sender=Portfolio)
+# def update_freelancer_portfolio(sender, instance, created = False, **kwargs):
+#     if created:
+#         freelancer = instance.freelancer
+#         freelancer.portfolios.add(instance)
+#         freelancer.save()

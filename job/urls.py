@@ -1,20 +1,31 @@
+from posixpath import basename
 from django.db.models import base
 from django.urls import path, include
 from rest_framework import routers
 from rest_framework.routers import DefaultRouter
 from . import views
 
+app_name = 'job'
+
 router = DefaultRouter()
 router.register(
     'jobs',
     views.JobView,
-    basename='jobs'
     )
-    
 
-app_name = 'job'
+router.register(
+    'proposal',
+    views.ProposalViewset,
+    # basename="proposal"
+    )
+
+router.register(
+    'job_request',
+    views.JobRequestViewset,
+    )
+
+
 urlpatterns= [
-    path('', include(router.urls)),
     # path('favourites', views.FavouritesView.as_view(), name= 'favourites'),
     # path('applied', views.AppliedJobsView.as_view(), name= 'applied_jobs'),
     # path('proposants', views.ApplicantsView.as_view(), name= 'proposants'),
@@ -26,3 +37,5 @@ urlpatterns= [
     # # Prod Note: remove the line below and its import
     # path('populate', populate.PopulateDB.as_view(), name= 'populate')
 ]
+
+urlpatterns += router.urls

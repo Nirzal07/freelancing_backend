@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import Address, Category, Skills
-from .models import Job, ProposedJobs, Proposals
+from .models import Job, ProposedJobs, Proposal, JobRequest
 
 class AbstractModelAdmin(admin.ModelAdmin):
     # add account.companyname whereever necessary
@@ -42,6 +42,16 @@ class SkillsAdmin(AbstractModelAdmin):
 class ProposedJobsAdmin(admin.ModelAdmin):
     pass
 
-@admin.register(Proposals)
-class ProposalsAdmin(admin.ModelAdmin):
-    pass
+@admin.register(Proposal)
+class ProposalAdmin(admin.ModelAdmin):
+    list_display = ['id', 'job', 'proposant',]
+    list_display_links = ['id', 'job', 'proposant']
+    search_fields = ('job', 'proposant', )
+    ordering = ('job', 'proposant',)
+
+@admin.register(JobRequest)
+class JobRequestAdmin(admin.ModelAdmin):
+    list_display = ['id', 'job', 'freelancer',]
+    list_display_links = ['id', 'job', 'freelancer']
+    search_fields = ('job', 'freelancer', )
+    ordering = ('job', 'freelancer',)

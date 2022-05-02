@@ -4,7 +4,7 @@ from decouple import config
 # import facebook
 # from .facebook import Facebook
 from rest_framework import serializers
-from .models import User, ClientAccount, FreelancerAccount
+from .models import User, ClientAccount, FreelancerAccount, Portfolio
 
 from job.models import Category,  Address, Skills
 from rest_framework.fields import CurrentUserDefault
@@ -13,6 +13,7 @@ from rest_framework.fields import CurrentUserDefault
 import os
 from rest_framework.exceptions import AuthenticationFailed
 from drf_extra_fields.fields import Base64ImageField
+import django.contrib.auth.password_validation as validators
 
 
 class UserAccountSerializer(serializers.ModelSerializer):
@@ -23,6 +24,10 @@ class UserAccountSerializer(serializers.ModelSerializer):
         write_only_fields = ('password',)
         read_only_fields = ('id',)
         extra_kwargs = {'is_freelancer': {'required': True}}
+    
+    def validate_password(self, data):
+            validators.validate_password(password=data)
+            return data
 
     def create(self, validated_data):
         user = User(
@@ -64,8 +69,6 @@ class ClientAccountSerializer(serializers.ModelSerializer):
         read_only_fields = ["registered_date"]
         extra_kwargs = {'url': {'lookup_field': 'slug'}}
 
-
-
 class FreelancerAccountSerializer(serializers.ModelSerializer):
     basic_user = serializers.StringRelatedField(
         read_only=True, 
@@ -102,18 +105,20 @@ class FreelancerAccountSerializer(serializers.ModelSerializer):
         model = FreelancerAccount
         fields = '__all__'
         read_only_fields = [ "registered_date", "slug"]
-        extra_kwargs = {'price': {'write_only': True}, 'url': {'lookup_field': 'slug'}}
+        extra_kwargs = { 'url': {'lookup_field': 'slug'}}
 
-
-
+class PortfolioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Portfolio
+        exclude = ["created_date", "updated_date"]
+        # read_only_fields = ["created_date", "updated_date"]
 
 class ChangePasswordSerializer(serializers.Serializer):
     model = User
 
     old_password = serializers.CharField(required = True)
     new_password = serializers.CharField(required = True)
-    
-    
+       
     
 class FacebookAuthSignUpSerializer(serializers.Serializer):
     """Handles serialization of facebook related data"""

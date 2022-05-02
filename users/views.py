@@ -33,10 +33,11 @@ from .serializers import (
     GoogleAuthSignInSerializer,
     GoogleAuthSignUpSerializer,
     FacebookAuthSignInSerializer,
-    FacebookAuthSignUpSerializer
+    FacebookAuthSignUpSerializer,
+    PortfolioSerializer
     )
 import job.models as job_models
-from .models import User, ClientAccount, FreelancerAccount, VerificationCode
+from .models import User, ClientAccount, FreelancerAccount, VerificationCode, Portfolio
 from django_filters import rest_framework as filters
 from django_filters import MultipleChoiceFilter
 from django.db.utils import OperationalError, ProgrammingError
@@ -48,11 +49,6 @@ class UserSignUpView(CreateAPIView):
 
     def post(self, request):
         serializer = UserAccountSerializer(data= request.data)
-        if self.request.data.get('email'):
-            if User.objects.filter(
-                email = self.request.data['email']).exists():
-                return Response({'error': 'An account with this email address already exists'}, status= status.HTTP_400_BAD_REQUEST)
-           
         if serializer.is_valid(raise_exception=True):
             user = serializer.create(serializer.validated_data)
             user.is_verified = True
@@ -91,10 +87,10 @@ class SignInView(APIView):
             user_data = ReadUserSerializer(user).data
             if user.is_freelancer:
                 user_secondary = FreelancerAccount.objects.get(basic_user = user)
-                user_secondary_data = FreelancerAccountSerializer(user_secondary).data
+                secondary_user_data = FreelancerAccountSerializer(user_secondary).data
             else:
                 user_secondary = ClientAccount.objects.get(basic_user = user) 
-                user_secondary_data = ClientAccountSerializer(user_secondary).data
+                secondary_user_data = ClientAccountSerializer(user_secondary).data
 
             if Token.objects.filter(user= user).exists():
                 Token.objects.filter(user= user).delete()
@@ -102,7 +98,10 @@ class SignInView(APIView):
             data = {
                 "message": "User logged in successful", 
                 "data": user_data,
-                "slug": user_secondary.slug,
+                # "slug": user_secondary.slug,
+                # "secondary_user_id": user_secondary.id,
+                "secondary_data" : secondary_user_data,
+                # "has_complete_profile": user_secondary.has_complete_profile,
                 "token": token.key
                 }
             
@@ -189,6 +188,10 @@ class FreelancerAccountViewset(ModelViewSet):
     filterset_class = FreelancerFilter
     ordering_fields = ['profile_views']
     lookup_field = 'slug'
+
+class PortfolioViewset(ModelViewSet):
+    queryset = Portfolio.objects.all()
+    serializer_class = PortfolioSerializer
 
 
 class FreelancerDashboardView(APIView):
