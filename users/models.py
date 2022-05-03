@@ -138,8 +138,8 @@ class FreelancerAccount(models.Model):
     
     basic_user              = models.OneToOneField('users.User', limit_choices_to={'is_freelancer': True} , on_delete= models.CASCADE)
     full_name               = models.CharField(max_length=50)
-    age                     = models.PositiveIntegerField(blank = True, default=0)
-    gender                  = models.CharField(choices=Gender, max_length=50, blank=True,  default=Gender[0][0])
+    age                     = models.PositiveIntegerField(null=True, blank = True)
+    gender                  = models.CharField(choices=Gender, max_length=50, blank=True, null=True)
     profile_picture         = models.ImageField(upload_to=freelancer_image_upload, height_field=None, width_field=None, blank=True, null=True)  
     category                = models.ForeignKey('job.Category', on_delete=models.SET_NULL, blank=True, null=True)
     contact                 = models.CharField(max_length=10, blank=True)
