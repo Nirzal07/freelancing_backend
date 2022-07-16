@@ -159,8 +159,8 @@ def update_categories_noofopening(sender, instance, created = False, **kwargs):
 class Proposal(models.Model):
     job = models.ForeignKey("job.Job", on_delete=models.CASCADE)
     proposant = models.ForeignKey("users.FreelancerAccount", on_delete=models.CASCADE)
-    # title = models.CharField(max_length=100)
     price = models.PositiveIntegerField()
+    is_shortlisted = models.BooleanField(default=False)
     proposal = models.TextField()
     status = models.CharField(max_length=20, choices=ProposalStatus, default=ProposalStatus[0][0])
 
@@ -171,6 +171,15 @@ class Proposal(models.Model):
 
     def __str__(self):
         return f"{self.proposant}'s Proposal for {self.job.title[:10]}..."
+
+    @property
+    def job_details(self):
+        return { "title": self.job.title, "slug": self.job.slug }
+
+    @property
+    def proposant_details(self):
+        return  { "full_name": self.proposant.full_name, "bio":self.proposant.bio, "category":self.proposant.category.title, "slug": self.proposant.slug,  }
+
 
 class JobRequest(models.Model):
     job = models.ForeignKey("job.Job", on_delete=models.CASCADE)

@@ -59,6 +59,10 @@ class FavouritesSerializer(serializers.ModelSerializer):
     #     read_only_fields = ['added_on']
         
 class ProposalSerializer(serializers.ModelSerializer):
+    job_details = serializers.ReadOnlyField()
+    proposant_details = serializers.ReadOnlyField()
+
+
     class Meta:
         model = Proposal
         fields = '__all__'

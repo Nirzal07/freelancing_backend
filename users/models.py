@@ -5,7 +5,7 @@ from django.core.mail import send_mail
 from django.utils.translation import ugettext_lazy as _
 from django.utils.text import slugify
 from django.utils import timezone
-
+import uuid
 from .managers import CustomUserManager, FreelancerManager
 from django.contrib import messages
 from django.db.models.signals import post_save, pre_save
@@ -110,22 +110,29 @@ class ClientAccount(models.Model):
     profession              = models.CharField(max_length=500, blank=True)
     company_category        = models.CharField(max_length=500, blank=True)
     registered_date         = models.DateTimeField(auto_now_add=True)
-    slug                    = models.SlugField(unique=True)
+    slug                    = models.SlugField(unique=True, default=uuid.uuid4())
 
     def __str__(self):
         return self.full_name
 
+    def save(self, *args, **kwargs):
+        if self.basic_user.is_freelancer and FreelancerAccount.filter(basic_user=self.basic_user).exists():
+            raise Exception('Account already Registered as Freelancer')
+        return super().save(*args, **kwargs)
+
     @property
     def has_complete_profile(self):
-        if self.basic_user and self.age and self.gender and self.contact:
+        if self.basic_user and self.gender and self.contact:
             return True
         return False
         
-@receiver(post_save, sender=ClientAccount)
-def update_client_slug(sender, instance, created = False, **kwargs):
-    if not instance.slug:
-        instance.slug = slugify( f"{instance.id}-{instance.full_name}" )
-        instance.save()
+    
+
+# @receiver(post_save, sender=ClientAccount)
+# def update_client_slug(sender, instance, created = False, **kwargs):
+#     if not instance.slug:
+#         instance.slug = slugify( f"{instance.id}-{instance.full_name}" )
+#         instance.save()
 
 
 def freelancer_image_upload(instance, filename):
@@ -150,15 +157,15 @@ class FreelancerAccount(models.Model):
     description             = models.TextField(blank=True, null=True)
     portfolios              = models.ManyToManyField('Portfolio', blank=True)   
     profile_views           = models.PositiveIntegerField(blank = True, default=0)
-    slug                    = models.SlugField(unique=True)
+    slug                    = models.SlugField(unique=True, default=uuid.uuid4())
     registered_date         = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
         return self.full_name
 
     def save(self, *args, **kwargs):
-        if self.slug:
-            self.slug = slugify( f"{self.id}-{self.full_name}" )
+        if not self.basic_user.is_freelancer and not FreelancerAccount.filter(basic_user=self.basic_user).exists():
+            raise Exception('Account already Registered as Client')
         return super().save(*args, **kwargs)
 
     @property

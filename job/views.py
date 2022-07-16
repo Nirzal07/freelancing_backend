@@ -162,6 +162,8 @@ class JobView(ModelViewSet):
     #     return Response(data)
     
 class ProposalViewset(ModelViewSet):
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['job', 'proposant', "is_shortlisted"]
     queryset = Proposal.objects.all()
     serializer_class = ProposalSerializer
 

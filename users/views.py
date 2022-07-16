@@ -43,6 +43,8 @@ from django_filters import MultipleChoiceFilter
 from django.db.utils import OperationalError, ProgrammingError
 from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
+
+
 class UserSignUpView(CreateAPIView):
     serializer_class = UserAccountSerializer
     permission_classes = (AllowAny,)
@@ -97,13 +99,15 @@ class SignInView(APIView):
             token= Token.objects.create(user= user)
             data = {
                 "message": "User logged in successful", 
-                "data": user_data,
-                # "slug": user_secondary.slug,
-                # "secondary_user_id": user_secondary.id,
-                "secondary_data" : secondary_user_data,
+                # "data": user_data,
+                "slug": user_secondary.slug,
+                "secondary_user_id": user_secondary.id,
+                # "secondary_data" : secondary_user_data,
                 # "has_complete_profile": user_secondary.has_complete_profile,
                 "token": token.key
                 }
+            
+            data.update(user_data)
             
             return Response(data, status= status.HTTP_200_OK)
         elif user and not user.is_verified:
